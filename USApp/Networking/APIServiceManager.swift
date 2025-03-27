@@ -11,11 +11,18 @@ import UserNotifications
 final class APIServiceManager {
     static let shared = APIServiceManager()
 
+    private var config: Config
     private let googleAPI = GoogleAPISheet()
     private let noCodeAPI = NoCodeAPIService()
     private weak var timer: Timer?
 
-    private init() {}
+    private init() {
+        self.config = Config(
+            updateInterval: 300,
+            maxRetries: 3,
+            cacheTimeout: 3600
+        )
+    }
 
     // Ajout d'un type d'erreur personnalisé
     enum APIError: Error {
@@ -59,7 +66,7 @@ final class APIServiceManager {
     func startBackgroundUpdates(forTabId tabId: String) {
         stopBackgroundUpdates()
 
-        timer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { _ in
+        timer = Timer.scheduledTimer(withTimeInterval: config.updateInterval, repeats: true) { _ in
             Task {
                 do {
                     let _ = try await self.fetchSheetData(tabId: tabId, useCache: false)
@@ -146,7 +153,11 @@ final class APIServiceManager {
     }
 
     // Ajouter une méthode de configuration publique
-    func configure(with config: Config) {
-        self.config = config
+    func configure(with newConfig: Config) {
+        self.config = newConfig
+        if timer != nil {
+            stopBackgroundUpdates()
+            startBackgroundUpdates(forTabId: "groupe")
+        }
     }
 }
