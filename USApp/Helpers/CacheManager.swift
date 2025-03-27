@@ -8,14 +8,24 @@
 import Foundation
 
 final class CacheManager {
+    struct CacheConfig {
+        let maxAge: TimeInterval
+        let maxSize: Int64
+        
+        static let `default` = CacheConfig(
+            maxAge: 3600, // 1 heure
+            maxSize: 1024 * 1024 * 1024 // 1 GB
+        )
+    }
+
     private let cacheDirectory: URL
     private let fileManager: FileManager
     private let config: CacheConfig
 
-    init() {
+    init(config: CacheConfig = .default) {
         fileManager = FileManager.default
         cacheDirectory = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first!
-        config = CacheConfig(maxAge: 3600, maxSize: 1024 * 1024 * 1024) // Default values, actual implementation should calculate these
+        self.config = config
     }
 
     func saveData(_ data: [[String]], forKey key: String) {
