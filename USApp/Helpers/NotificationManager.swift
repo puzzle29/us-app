@@ -57,13 +57,9 @@ final class NotificationManager {
     }
     
     private func calculateNotificationDate(for eventDate: Date) -> Date? {
-        guard let dayBefore = Calendar.current.date(byAdding: .day, value: -1, to: eventDate),
-              let notificationDate = Calendar.current.date(bySettingHour: 16, minute: 0, second: 0, of: dayBefore) else {
-            print("❌ Impossible de calculer la date de notification")
-            return nil
-        }
         
-        print("✅ Notification programmée pour le \(notificationDate)")
+        var notificationDate = Calendar.current.date(byAdding: .day, value: -1, to: eventDate)
+        notificationDate = Calendar.current.date(bySettingHour: 19, minute: 0, second: 0, of: notificationDate ?? eventDate)
         return notificationDate
     }
 
