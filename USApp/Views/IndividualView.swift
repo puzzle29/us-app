@@ -84,12 +84,60 @@ struct IndividualView: View {
 
     private func filteredData() -> [[String]] {
         let today = Calendar.current.startOfDay(for: Date())
-
-        return sheetData.filter { row in
-            guard row.count >= 8, let date = dateFromString(row[0]) else { return false }
+        
+        // Ajout de logs pour déboguer
+        print("📊 Données totales : \(sheetData.count) lignes")
+        
+        let filtered = sheetData.filter { row in
+            // Vérifier le format de la ligne
+            print("🔍 Analyse ligne : \(row)")
+            
+            guard row.count >= 8 else {
+                print("⚠️ Ligne ignorée : moins de 8 colonnes")
+                return false
+            }
+            
+            // Vérifier le format de la date
+            let dateString = row[0]
+            print("📅 Date à analyser : \(dateString)")
+            
+            guard let date = dateFromString(dateString) else {
+                print("⚠️ Date invalide : \(dateString)")
+                return false
+            }
+            
+            // Vérifier les critères de filtrage
             let matchesSearch = searchQuery.isEmpty || row.contains { $0.localizedCaseInsensitiveContains(searchQuery) }
             let matchesDate = isShowingFutureSessions ? date >= today : date < today
+            
+            print("""
+                ✓ Résultat du filtrage pour la ligne :
+                - Date valide : \(date)
+                - Correspond à la recherche : \(matchesSearch)
+                - Correspond au filtre de date : \(matchesDate)
+                - Sera affichée : \(matchesSearch && matchesDate)
+                """)
+            
             return matchesSearch && matchesDate
+        }
+        
+        print("✅ Résultat final : \(filtered.count) lignes après filtrage")
+        return filtered
+    }
+
+    private func dateFromString(_ dateString: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd-MM-yyyy"
+        // Ajouter ces lignes pour s'assurer que le parsing de date est cohérent
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.timeZone = TimeZone.current
+        
+        if let date = formatter.date(from: dateString) {
+            print("✅ Date parsée avec succès : \(date)")
+            return date
+        } else {
+            print("❌ Échec du parsing de la date : \(dateString)")
+            return nil
         }
     }
 
@@ -97,40 +145,35 @@ struct IndividualView: View {
         isLoading = true
         errorMessage = nil
         isUpdating = true
-
+        
+        print("🔄 Début du chargement des données pour \(tabName)")
+        
         let cacheKey = "GoogleSheet_\(tabName)"
-
-        // Charger les données en cache si disponibles
+        
         if let cachedData = cacheManager.loadData(forKey: cacheKey) {
+            print("📦 Données trouvées dans le cache : \(cachedData.count) lignes")
             self.sheetData = cachedData
             self.isLoading = false
         }
-
-        // Simuler un délai pour garantir l'affichage de la barre
+        
         Task {
             do {
-                
-                // Simuler un délai pour voir la barre de progression
-                try await Task.sleep(nanoseconds: 1_500_000_000)
-
                 let data = try await GoogleAPISheet().fetchAllRows(tabName: tabName, useCache: false)
+                print("🌐 Données reçues de l'API : \(data.count) lignes")
+                
                 await MainActor.run {
                     self.sheetData = data
                     self.isUpdating = false
+                    print("✅ Données mises à jour dans la vue")
                 }
             } catch {
                 await MainActor.run {
                     self.errorMessage = "Erreur : \(error.localizedDescription)"
                     self.isUpdating = false
+                    print("❌ Erreur lors du chargement : \(error.localizedDescription)")
                 }
             }
         }
-    }
-
-    private func dateFromString(_ dateString: String) -> Date? {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd-MM-yyyy"
-        return formatter.date(from: dateString)
     }
 }
 
