@@ -10,10 +10,12 @@ import Foundation
 final class CacheManager {
     private let cacheDirectory: URL
     private let fileManager: FileManager
+    private let config: CacheConfig
 
     init() {
         fileManager = FileManager.default
         cacheDirectory = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first!
+        config = CacheConfig(maxAge: 3600, maxSize: 1024 * 1024 * 1024) // Default values, actual implementation should calculate these
     }
 
     func saveData(_ data: [[String]], forKey key: String) {
@@ -48,5 +50,31 @@ final class CacheManager {
         } catch {
             print("❌ Erreur lors de la suppression du cache : \(error)")
         }
+    }
+
+    private func isDataExpired(forKey key: String) -> Bool {
+        let fileURL = cacheDirectory.appendingPathComponent(key)
+        guard let attributes = try? fileManager.attributesOfItem(atPath: fileURL.path),
+              let modificationDate = attributes[.modificationDate] as? Date else {
+            return true
+        }
+        return Date().timeIntervalSince(modificationDate) > config.maxAge
+    }
+
+    private func cleanupCache() {
+        do {
+            let files = try fileManager.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey])
+            let expiredFiles = files.filter { isDataExpired(forKey: $0.lastPathComponent) }
+            try expiredFiles.forEach { try fileManager.removeItem(at: $0) }
+        } catch {
+            print("❌ Erreur lors du nettoyage du cache : \(error)")
+        }
+    }
+
+    enum CacheError: Error {
+        case saveFailed(Error)
+        case loadFailed(Error)
+        case invalidData
+        case diskSpaceFull
     }
 }

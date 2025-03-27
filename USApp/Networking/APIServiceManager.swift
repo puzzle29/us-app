@@ -13,9 +13,42 @@ final class APIServiceManager {
 
     private let googleAPI = GoogleAPISheet()
     private let noCodeAPI = NoCodeAPIService()
-    private var timer: Timer?
+    private weak var timer: Timer?
 
     private init() {}
+
+    // Ajout d'un type d'erreur personnalisé
+    enum APIError: Error {
+        case networkError(Error)
+        case invalidData
+        case rateLimitExceeded
+        case cacheError
+    }
+
+    // Ajout d'une configuration
+    struct Config {
+        let updateInterval: TimeInterval
+        let maxRetries: Int
+        let cacheTimeout: TimeInterval
+    }
+
+    // Amélioration de la gestion du timer avec une weak reference
+    private func fetchWithRetry(tabId: String, attempts: Int = 0) async throws -> [[String]] {
+        do {
+            return try await fetchSheetData(tabId: tabId)
+        } catch {
+            if attempts < config.maxRetries {
+                try await Task.sleep(nanoseconds: 1_000_000_000 * UInt64(attempts))
+                return try await fetchWithRetry(tabId: tabId, attempts: attempts + 1)
+            }
+            throw APIError.networkError(error)
+        }
+    }
+
+    // Amélioration de la gestion de la mémoire
+    deinit {
+        stopBackgroundUpdates()
+    }
 
     func fetchSheetData(tabId: String, useCache: Bool = true) async throws -> [[String]] {
         let data = try await googleAPI.fetchAllRows(tabName: tabId, useCache: useCache)

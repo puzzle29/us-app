@@ -7,7 +7,34 @@
 
 import SwiftUI
 
+// Création d'un ViewModel séparé
+final class GroupViewModel: ObservableObject {
+    @Published private(set) var sheetData: [[String]] = []
+    @Published private(set) var isLoading = false
+    @Published private(set) var errorMessage: String?
+    
+    // Déplacer la logique de filtrage dans le ViewModel
+    func filteredData(searchQuery: String, isShowingFutureSessions: Bool) -> [[String]] {
+        let today = Calendar.current.startOfDay(for: Date())
+
+        return sheetData.filter { row in
+            guard row.count >= 8, let date = dateFromString(row[0]) else { return false }
+            let matchesSearch = searchQuery.isEmpty || row.contains { $0.localizedCaseInsensitiveContains(searchQuery) }
+            let matchesDate = isShowingFutureSessions ? date >= today : date < today
+            return matchesSearch && matchesDate
+        }
+    }
+
+    private func dateFromString(_ dateString: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd-MM-yyyy"
+        return formatter.date(from: dateString)
+    }
+}
+
+// Vue refactorisée
 struct GroupView: View {
+    @StateObject private var viewModel = GroupViewModel()
     @State private var sheetData: [[String]] = []
     @State private var isLoading: Bool = false
     @State private var isUpdating: Bool = false
@@ -32,14 +59,14 @@ struct GroupView: View {
                     Text("Erreur : \(errorMessage)")
                         .foregroundColor(.red)
                         .padding()
-                } else if filteredData().isEmpty {
+                } else if viewModel.filteredData(searchQuery: searchQuery, isShowingFutureSessions: isShowingFutureSessions).isEmpty {
                     Text("Aucune séance trouvée")
                         .foregroundColor(.secondary)
                         .padding()
                 } else {
                     ScrollView {
                         VStack(spacing: 10) {
-                            ForEach(filteredData(), id: \.self) { row in
+                            ForEach(viewModel.filteredData(searchQuery: searchQuery, isShowingFutureSessions: isShowingFutureSessions), id: \.self) { row in
                                 Button(action: {
                                     selectedRow = row
                                     showDetailView = true
@@ -65,17 +92,6 @@ struct GroupView: View {
             }
         }
         .onAppear(perform: fetchGroupData)
-    }
-
-    private func filteredData() -> [[String]] {
-        let today = Calendar.current.startOfDay(for: Date())
-
-        return sheetData.filter { row in
-            guard row.count >= 8, let date = dateFromString(row[0]) else { return false }
-            let matchesSearch = searchQuery.isEmpty || row.contains { $0.localizedCaseInsensitiveContains(searchQuery) }
-            let matchesDate = isShowingFutureSessions ? date >= today : date < today
-            return matchesSearch && matchesDate
-        }
     }
 
     private func fetchGroupData() {
@@ -110,11 +126,5 @@ struct GroupView: View {
                 }
             }
         }
-    }
-
-    private func dateFromString(_ dateString: String) -> Date? {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd-MM-yyyy"
-        return formatter.date(from: dateString)
     }
 }
