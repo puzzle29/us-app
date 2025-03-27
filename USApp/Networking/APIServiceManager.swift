@@ -58,9 +58,15 @@ final class APIServiceManager {
     }
 
     func fetchSheetData(tabId: String, useCache: Bool = true) async throws -> [[String]] {
-        let data = try await googleAPI.fetchAllRows(tabName: tabId, useCache: useCache)
-        scheduleRaceNotifications(from: data)
-        return data
+        do {
+            let data = try await googleAPI.fetchAllRows(tabName: tabId, useCache: useCache)
+            print("✅ Données récupérées : \(data.count) lignes")
+            scheduleRaceNotifications(from: data)
+            return data
+        } catch {
+            print("❌ Erreur dans fetchSheetData : \(error)")
+            throw error
+        }
     }
 
     func startBackgroundUpdates(forTabId tabId: String) {

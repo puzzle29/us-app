@@ -12,17 +12,55 @@ final class GroupViewModel: ObservableObject {
     @Published private(set) var sheetData: [[String]] = []
     @Published private(set) var isLoading = false
     @Published private(set) var errorMessage: String?
+    private let cacheManager = CacheManager()
+    
+    // Ajouter la fonction pour mettre à jour les données
+    func fetchGroupData() {
+        isLoading = true
+        errorMessage = nil
+        
+        let cacheKey = "GoogleSheet_groupe"
+        
+        // Charger les données en cache
+        if let cachedData = cacheManager.loadData(forKey: cacheKey) {
+            self.sheetData = cachedData
+            self.isLoading = false
+        }
+        
+        Task {
+            do {
+                let data = try await APIServiceManager.shared.fetchSheetData(tabId: "groupe", useCache: false)
+                await MainActor.run {
+                    self.sheetData = data
+                    self.isLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = error.localizedDescription
+                    self.isLoading = false
+                }
+            }
+        }
+    }
     
     // Déplacer la logique de filtrage dans le ViewModel
     func filteredData(searchQuery: String, isShowingFutureSessions: Bool) -> [[String]] {
         let today = Calendar.current.startOfDay(for: Date())
-
-        return sheetData.filter { row in
-            guard row.count >= 8, let date = dateFromString(row[0]) else { return false }
+        
+        print("💭 Filtrage : \(sheetData.count) lignes totales")
+        
+        let filtered = sheetData.filter { row in
+            guard row.count >= 8, let date = dateFromString(row[0]) else {
+                print("⚠️ Ligne ignorée : format incorrect ou date invalide")
+                return false
+            }
             let matchesSearch = searchQuery.isEmpty || row.contains { $0.localizedCaseInsensitiveContains(searchQuery) }
             let matchesDate = isShowingFutureSessions ? date >= today : date < today
             return matchesSearch && matchesDate
         }
+        
+        print("✅ Résultat du filtrage : \(filtered.count) lignes")
+        return filtered
     }
 
     private func dateFromString(_ dateString: String) -> Date? {
@@ -91,40 +129,8 @@ struct GroupView: View {
                 DetailGroupView(rowData: selectedRow)
             }
         }
-        .onAppear(perform: fetchGroupData)
-    }
-
-    private func fetchGroupData() {
-        isLoading = true
-        errorMessage = nil
-        isUpdating = true
-
-        let cacheKey = "GoogleSheet_groupe"
-
-        // Charger les données en cache avant la mise à jour
-        if let cachedData = cacheManager.loadData(forKey: cacheKey) {
-            self.sheetData = cachedData
-            self.isLoading = false
-        }
-
-        // Simuler un délai pour garantir l'affichage de la barre
-        Task {
-            do {
-                
-                // Simuler un délai pour voir la barre de progression
-                try await Task.sleep(nanoseconds: 1_500_000_000)
-
-                let data = try await APIServiceManager.shared.fetchSheetData(tabId: "groupe", useCache: false)
-                await MainActor.run {
-                    self.sheetData = data
-                    self.isUpdating = false
-                }
-            } catch {
-                await MainActor.run {
-                    self.errorMessage = "Erreur : \(error.localizedDescription)"
-                    self.isUpdating = false
-                }
-            }
+        .onAppear {
+            viewModel.fetchGroupData() // Appeler la méthode du ViewModel
         }
     }
 }
