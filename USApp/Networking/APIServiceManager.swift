@@ -144,4 +144,9 @@ final class APIServiceManager {
             return nil
         }
     }
+
+    // Ajouter une méthode de configuration publique
+    func configure(with config: Config) {
+        self.config = config
+    }
 }
