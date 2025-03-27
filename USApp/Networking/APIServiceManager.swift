@@ -93,69 +93,37 @@ final class APIServiceManager {
     }
 
     private func scheduleRaceNotifications(from data: [[String]]) {
-        let raceEntries = data.filter { row in
-            row.count >= 6 && row[4].lowercased() == "course"
-        }
-
-        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
-
-        for entry in raceEntries {
-            guard entry.count >= 6 else { continue }
-
-            let dateString = entry[0]
-            let details = entry[5]
-            guard let raceDate = dateFromString(dateString) else { continue }
-
-            let names = extractNames(from: details)
-            guard !names.isEmpty else { continue }
-
-            guard let notificationDate = Calendar.current.date(bySettingHour: 19, minute: 0, second: 0, of: raceDate) else { continue }
-
-            scheduleNotification(
-                title: "Encouragez vos amis !",
-                body: "\(names.joined(separator: ", ")) font une course demain, encouragez-les !!! 💪",
-                at: notificationDate
-            )
-        }
-    }
-
-    private func scheduleNotification(title: String, body: String, at date: Date) {
-        let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
-        content.sound = .default
-
-        let trigger = UNCalendarNotificationTrigger(
-            dateMatching: Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: date),
-            repeats: false
-        )
-
-        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                print("❌ Erreur lors de la planification de la notification : \(error.localizedDescription)")
-            } else {
-                print("✅ Notification planifiée pour \(date)")
+        for row in data {
+            guard row.count >= 8,
+                  let dateString = row[0] as String?,
+                  let raceDate = dateFromString(dateString) else {
+                continue
             }
+            
+            // Calculer J-1 pour la date de la course
+            guard let dayBeforeRace = Calendar.current.date(byAdding: .day, value: -1, to: raceDate) else {
+                print("❌ Impossible de calculer J-1 pour la date : \(raceDate)")
+                continue
+            }
+            
+            let course = row[1]
+            let details = row[7]
+            
+            // Utiliser la date J-1 pour la notification
+            NotificationManager.shared.scheduleNotification(
+                forCourse: course,
+                details: details,
+                on: dayBeforeRace
+            )
         }
     }
 
     private func dateFromString(_ dateString: String) -> Date? {
         let formatter = DateFormatter()
         formatter.dateFormat = "dd-MM-yyyy"
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.timeZone = TimeZone.current
         return formatter.date(from: dateString)
-    }
-
-    private func extractNames(from details: String) -> [String] {
-        let regex = try? NSRegularExpression(pattern: "\\(([^)]+)\\)")
-        let matches = regex?.matches(in: details, range: NSRange(details.startIndex..., in: details)) ?? []
-
-        return matches.compactMap { match in
-            if let range = Range(match.range(at: 1), in: details) {
-                return String(details[range])
-            }
-            return nil
-        }
     }
 
     // Ajouter une méthode de configuration publique
