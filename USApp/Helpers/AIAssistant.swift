@@ -22,18 +22,25 @@ class AIAssistantViewModel: ObservableObject {
         
         do {
             let query = ChatQuery(
-                model: .gpt4,
                 messages: [
                     .init(role: .system, content: "Tu es un coach sportif expert qui donne des conseils personnalisés pour la préparation et la réussite des séances d'entraînement."),
                     .init(role: .user, content: prompt)
-                ]
+                ],
+                model: .gpt4
             )
             
             let result = try await openAI.chats(query: query)
             
-            await MainActor.run {
-                self.messages.append(Message(content: result.choices.first?.message.content ?? "", isAI: true))
-                self.isTyping = false
+            if let message = result.choices.first?.message.content {
+                await MainActor.run {
+                    self.messages.append(Message(content: message, isAI: true))
+                    self.isTyping = false
+                }
+            } else {
+                await MainActor.run {
+                    self.messages.append(Message(content: "Réponse vide de l'IA.", isAI: true))
+                    self.isTyping = false
+                }
             }
         } catch {
             await MainActor.run {
