@@ -23,8 +23,8 @@ class AIAssistantViewModel: ObservableObject {
         do {
             let query = ChatQuery(
                 messages: [
-                    ChatQuery.ChatCompletionMessageParam(role: .system, content: "Tu es un coach sportif expert qui donne des conseils personnalisés pour la préparation et la réussite des séances d'entraînement."),
-                    ChatQuery.ChatCompletionMessageParam(role: .user, content: prompt)
+                    ChatQuery.ChatCompletionMessageParam(role: .system, content: "Tu es un coach sportif expert qui donne des conseils personnalisés pour la préparation et la réussite des séances d'entraînement.")!,
+                    ChatQuery.ChatCompletionMessageParam(role: .user, content: prompt)!
                 ],
                 model: .gpt4
             )
