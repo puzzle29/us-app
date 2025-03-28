@@ -60,8 +60,6 @@ final class APIServiceManager {
     func fetchSheetData(tabId: String, useCache: Bool = true) async throws -> [[String]] {
         do {
             let data = try await googleAPI.fetchAllRows(tabName: tabId, useCache: useCache)
-            print("✅ Données récupérées : \(data.count) lignes")
-            scheduleRaceNotifications(from: data)
             return data
         } catch {
             print("❌ Erreur dans fetchSheetData : \(error)")
@@ -90,54 +88,6 @@ final class APIServiceManager {
         timer?.invalidate()
         timer = nil
         print("⏹️ Mises à jour en arrière-plan arrêtées")
-    }
-
-    private func scheduleRaceNotifications(from data: [[String]]) {
-        let raceEntries = data.filter { row in
-            row.count >= 6 && row[4].lowercased() == "course"
-        }
-
-        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
-
-        for entry in raceEntries {
-            guard entry.count >= 6 else { continue }
-
-            let dateString = entry[0]
-            let details = entry[5]
-            guard let raceDate = dateFromString(dateString) else { continue }
-
-            let names = extractNames(from: details)
-            guard !names.isEmpty else { continue }
-
-            guard let notificationDate = Calendar.current.date(bySettingHour: 19, minute: 0, second: 0, of: raceDate) else { continue }
-
-            scheduleNotification(
-                title: "Encouragez vos amis !",
-                body: "\(names.joined(separator: ", ")) font une course demain, encouragez-les !!! 💪",
-                at: notificationDate
-            )
-        }
-    }
-
-    private func scheduleNotification(title: String, body: String, at date: Date) {
-        let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
-        content.sound = .default
-
-        let trigger = UNCalendarNotificationTrigger(
-            dateMatching: Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: date),
-            repeats: false
-        )
-
-        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                print("❌ Erreur lors de la planification de la notification : \(error.localizedDescription)")
-            } else {
-                print("✅ Notification planifiée pour \(date)")
-            }
-        }
     }
 
     private func dateFromString(_ dateString: String) -> Date? {
