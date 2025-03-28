@@ -168,6 +168,7 @@ struct RequestFormView: View {
     @Binding var selectedType: RequestType
     @Binding var messageText: String
     @Environment(\.dismiss) private var dismiss
+    @State private var showingConfirmation = false
     
     var body: some View {
         NavigationView {
@@ -186,7 +187,10 @@ struct RequestFormView: View {
                 }
                 
                 Section {
-                    Button(action: sendRequest) {
+                    Button(action: {
+                        sendRequest()
+                        showingConfirmation = true
+                    }) {
                         HStack {
                             Spacer()
                             Text("Envoyer")
@@ -205,12 +209,17 @@ struct RequestFormView: View {
                     }
                 }
             }
+            .alert("Demande envoyée", isPresented: $showingConfirmation) {
+                Button("OK") {
+                    dismiss()
+                }
+            } message: {
+                Text("Votre \(selectedType.rawValue.lowercased()) a été envoyée avec succès.")
+            }
         }
     }
     
     private func sendRequest() {
-        // Ici, vous pouvez implémenter la logique d'envoi
-        // Par exemple, ouvrir l'application mail avec les informations pré-remplies
         let subject = "[\(selectedType.rawValue)] Demande US Athlé"
         let body = messageText
         
@@ -219,7 +228,5 @@ struct RequestFormView: View {
            let url = URL(string: "mailto:email@example.com?subject=\(encodedSubject)&body=\(encodedBody)") {
             UIApplication.shared.open(url)
         }
-        
-        dismiss()
     }
 }
