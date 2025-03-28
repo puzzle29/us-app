@@ -88,7 +88,7 @@ class AIAssistantViewModel: ObservableObject {
     
     private func createPrompt(from activity: [String]) -> String {
         return """
-        En tant que coach sportif, donne des conseils courts et précis (max 150 mots) pour cette séance :
+        En tant que coach sportif, donne des conseils courts et précis (max 150 mots) pour cette séance (utilise des emojis) :
         
         Date: \(activity[0])
         Échauffement: \(activity[1])
