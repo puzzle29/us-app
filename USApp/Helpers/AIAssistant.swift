@@ -29,19 +29,15 @@ class AIAssistantViewModel: ObservableObject {
         let prompt = createPrompt(from: activity)
         
         do {
-            print("🔄 Envoi de la requête à OpenAI...")
             let query = ChatQuery(
                 messages: [
                     ChatQuery.ChatCompletionMessageParam(role: .system, content: "Tu es un coach sportif expert qui donne des conseils personnalisés pour la préparation et la réussite des séances d'entraînement.")!,
                     ChatQuery.ChatCompletionMessageParam(role: .user, content: prompt)!
                 ],
-                model: .gpt4
+                model: .gpt3_5Turbo
             )
             
-            print("📝 Prompt envoyé : \(prompt)")
-            
             let result = try await openAI.chats(query: query)
-            print("✅ Réponse reçue de OpenAI")
             
             await MainActor.run {
                 if let message = result.choices.first?.message.content {
@@ -52,9 +48,9 @@ class AIAssistantViewModel: ObservableObject {
                 self.isTyping = false
             }
         } catch {
-            print("❌ Erreur OpenAI : \(error)")
+            print("❌ Erreur OpenAI détaillée : \(error)")
             await MainActor.run {
-                self.messages.append(Message(content: "Désolé, je n'ai pas pu générer de conseils pour le moment. Erreur: \(error.localizedDescription)", isAI: true))
+                self.messages.append(Message(content: "Désolé, je n'ai pas pu générer de conseils pour le moment. Veuillez réessayer.", isAI: true))
                 self.isTyping = false
             }
         }
