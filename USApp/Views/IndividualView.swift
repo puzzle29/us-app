@@ -57,6 +57,9 @@ struct IndividualView: View {
                                 }
                                 .buttonStyle(TileButtonStyle())
                             }
+                            
+                            // Ajouter un espaceur en bas
+                            Spacer(minLength: 80) // Ajuster cette valeur selon vos besoins
                         }
                         .padding(.horizontal)
                     }
