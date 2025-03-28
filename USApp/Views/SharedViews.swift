@@ -142,9 +142,9 @@ struct RequestButton: View {
                 showingRequestSheet = true
             }) {
                 HStack {
-                    Image(systemName: "envelope.badge.fill")
+                    Image(systemName: "note.text")
                         .foregroundColor(.white)
-                    Text("Faire une demande")
+                    Text("Prendre une note")
                         .foregroundColor(.white)
                 }
                 .padding()
@@ -173,7 +173,7 @@ struct RequestFormView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Type de demande")) {
+                Section(header: Text("Type de note")) {
                     Picker("Type", selection: $selectedType) {
                         ForEach(RequestType.allCases, id: \.self) { type in
                             Text(type.rawValue).tag(type)
@@ -181,7 +181,7 @@ struct RequestFormView: View {
                     }
                 }
                 
-                Section(header: Text("Message")) {
+                Section(header: Text("La note")) {
                     TextEditor(text: $messageText)
                         .frame(height: 150)
                 }
@@ -200,7 +200,7 @@ struct RequestFormView: View {
                     .foregroundColor(.blue)
                 }
             }
-            .navigationTitle("Nouvelle demande")
+            .navigationTitle("Nouvelle note")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -209,12 +209,12 @@ struct RequestFormView: View {
                     }
                 }
             }
-            .alert("Demande envoyée", isPresented: $showingConfirmation) {
+            .alert("Note enregistrée", isPresented: $showingConfirmation) {
                 Button("OK") {
                     dismiss()
                 }
             } message: {
-                Text("Votre \(selectedType.rawValue.lowercased()) a été envoyée avec succès.")
+                Text("Votre note a été enregistrée avec succès.")
             }
         }
     }
