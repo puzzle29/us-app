@@ -13,7 +13,12 @@ class AIAssistantViewModel: ObservableObject {
     }
     
     init() {
-        self.openAI = OpenAI(apiToken: "VOTRE_CLE_API")
+        // Assurez-vous que la clé API est définie
+        guard let apiKey = ProcessInfo.processInfo.environment["OPENAI_API_KEY"] ?? Bundle.main.infoDictionary?["OPENAI_API_KEY"] as? String else {
+            self.openAI = OpenAI(apiToken: "VOTRE_CLE_API")
+            return
+        }
+        self.openAI = OpenAI(apiToken: apiKey)
     }
     
     func generateAdvice(for activity: [String]) async {
@@ -24,6 +29,7 @@ class AIAssistantViewModel: ObservableObject {
         let prompt = createPrompt(from: activity)
         
         do {
+            print("🔄 Envoi de la requête à OpenAI...")
             let query = ChatQuery(
                 messages: [
                     ChatQuery.ChatCompletionMessageParam(role: .system, content: "Tu es un coach sportif expert qui donne des conseils personnalisés pour la préparation et la réussite des séances d'entraînement.")!,
@@ -32,7 +38,10 @@ class AIAssistantViewModel: ObservableObject {
                 model: .gpt4
             )
             
+            print("📝 Prompt envoyé : \(prompt)")
+            
             let result = try await openAI.chats(query: query)
+            print("✅ Réponse reçue de OpenAI")
             
             await MainActor.run {
                 if let message = result.choices.first?.message.content {
@@ -43,8 +52,9 @@ class AIAssistantViewModel: ObservableObject {
                 self.isTyping = false
             }
         } catch {
+            print("❌ Erreur OpenAI : \(error)")
             await MainActor.run {
-                self.messages.append(Message(content: "Désolé, je n'ai pas pu générer de conseils pour le moment.", isAI: true))
+                self.messages.append(Message(content: "Désolé, je n'ai pas pu générer de conseils pour le moment. Erreur: \(error.localizedDescription)", isAI: true))
                 self.isTyping = false
             }
         }
@@ -73,6 +83,28 @@ class AIAssistantViewModel: ObservableObject {
     }
 }
 
+struct AIAssistantImage: View {
+    var size: CGFloat
+    
+    var body: some View {
+        Group {
+            if let _ = UIImage(named: "ai-avatar") {
+                Image("ai-avatar")
+                    .resizable()
+                    .frame(width: size, height: size)
+            } else {
+                Image(systemName: "wand.and.stars")
+                    .resizable()
+                    .foregroundColor(.blue)
+                    .frame(width: size, height: size)
+            }
+        }
+        .clipShape(Circle())
+        .overlay(Circle().stroke(Color.blue, lineWidth: 2))
+        .shadow(radius: 5)
+    }
+}
+
 struct AIAssistantView: View {
     @StateObject private var viewModel = AIAssistantViewModel()
     @State private var showingChat = false
@@ -83,12 +115,7 @@ struct AIAssistantView: View {
             Button(action: {
                 showingChat = true
             }) {
-                Image("ai-avatar")
-                    .resizable()
-                    .frame(width: 60, height: 60)
-                    .clipShape(Circle())
-                    .overlay(Circle().stroke(Color.blue, lineWidth: 2))
-                    .shadow(radius: 5)
+                AIAssistantImage(size: 60)
             }
         }
         .sheet(isPresented: $showingChat) {
@@ -152,10 +179,7 @@ struct MessageBubble: View {
     var body: some View {
         HStack {
             if message.isAI {
-                Image("ai-avatar")
-                    .resizable()
-                    .frame(width: 30, height: 30)
-                    .clipShape(Circle())
+                AIAssistantImage(size: 30)
             }
             
             Text(message.content)
