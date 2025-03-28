@@ -98,8 +98,8 @@ struct DetailGroupView: View {
                         openInMaps(address: rowData[7])
                     }
                     
-                    // Ajouter le bouton de demande
-                    RequestButton()
+                    // Ajouter l'assistant IA
+                    AIAssistantView(activityData: rowData)
                         .padding(.top, 20)
                         .frame(maxWidth: .infinity, alignment: .center)
                 }

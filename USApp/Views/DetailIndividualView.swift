@@ -102,6 +102,11 @@ struct DetailIndividualView: View {
                     RequestButton()
                         .padding(.top, 20)
                         .frame(maxWidth: .infinity, alignment: .center)
+
+                    // Ajouter l'assistant IA
+                    AIAssistantView(activityData: rowData)
+                        .padding(.top, 20)
+                        .frame(maxWidth: .infinity, alignment: .center)
                 }
                 .padding()
             }
