@@ -13,7 +13,7 @@ class AIAssistantViewModel: ObservableObject {
     }
     
     init() {
-        self.openAI = OpenAI(apiToken: "VOTRE_CLE_API")
+        self.openAI = OpenAI(apiToken: "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")
     }
     
     func generateAdvice(for activity: [String]) async {
