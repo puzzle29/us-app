@@ -1,3 +1,6 @@
+import Foundation
+import SwiftUI
+
 class NotesManager: ObservableObject {
     static let shared = NotesManager()
     @Published private(set) var notes: [Note] = []

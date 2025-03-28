@@ -1,3 +1,5 @@
+import SwiftUI
+
 struct NotesView: View {
     @StateObject private var notesManager = NotesManager.shared
     
