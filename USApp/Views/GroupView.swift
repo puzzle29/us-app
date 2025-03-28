@@ -44,7 +44,7 @@ final class GroupViewModel: ObservableObject {
     }
     
     // Déplacer la logique de filtrage dans le ViewModel
-    func filteredData(searchQuery: String, isShowingFutureSessions: Bool) -> [[String]] {
+    func filteredData(searchQuery: String, isShowingFutureSessions: Bool, activityType: String?) -> [[String]] {
         let today = Calendar.current.startOfDay(for: Date())
         
         print("💭 Filtrage : \(sheetData.count) lignes totales")
@@ -56,7 +56,8 @@ final class GroupViewModel: ObservableObject {
             }
             let matchesSearch = searchQuery.isEmpty || row.contains { $0.localizedCaseInsensitiveContains(searchQuery) }
             let matchesDate = isShowingFutureSessions ? date >= today : date < today
-            return matchesSearch && matchesDate
+            let matchesType = activityType == nil || row[4] == activityType
+            return matchesSearch && matchesDate && matchesType
         }
         
         print("✅ Résultat du filtrage : \(filtered.count) lignes")
@@ -81,6 +82,7 @@ struct GroupView: View {
     @State private var selectedRow: [String]?
     @State private var showDetailView: Bool = false
     var isShowingFutureSessions: Bool
+    @State private var selectedActivityType: String?
 
     private let cacheManager = CacheManager()
 
@@ -97,14 +99,22 @@ struct GroupView: View {
                     Text("Erreur : \(errorMessage)")
                         .foregroundColor(.red)
                         .padding()
-                } else if viewModel.filteredData(searchQuery: searchQuery, isShowingFutureSessions: isShowingFutureSessions).isEmpty {
+                } else if viewModel.filteredData(
+                    searchQuery: searchQuery,
+                    isShowingFutureSessions: isShowingFutureSessions,
+                    activityType: selectedActivityType
+                ).isEmpty {
                     Text("Aucune séance trouvée")
                         .foregroundColor(.secondary)
                         .padding()
                 } else {
                     ScrollView {
                         VStack(spacing: 10) {
-                            ForEach(viewModel.filteredData(searchQuery: searchQuery, isShowingFutureSessions: isShowingFutureSessions), id: \.self) { row in
+                            ForEach(viewModel.filteredData(
+                                searchQuery: searchQuery,
+                                isShowingFutureSessions: isShowingFutureSessions,
+                                activityType: selectedActivityType
+                            ), id: \.self) { row in
                                 Button(action: {
                                     selectedRow = row
                                     showDetailView = true

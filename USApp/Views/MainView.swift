@@ -16,6 +16,7 @@ struct MainView: View {
     @State private var showInformationSheet: Bool = false
     @State private var isShowingFutureSessions: Bool = true
     @State private var searchQuery: String = ""
+    @State private var selectedActivityType: String?
 
     // MARK: - Body
     var body: some View {
@@ -33,8 +34,15 @@ struct MainView: View {
 
                     // MARK: - Search Bar
                     if selectedTab != .ffa {
-                        SearchBar(placeholder: "Rechercher une séance ou une course", text: $searchQuery)
-                            .padding(.horizontal)
+                        HStack {
+                            SearchBar(placeholder: "Rechercher une séance ou une course", text: $searchQuery)
+                            
+                            ActivityTypeFilter(
+                                selectedType: $selectedActivityType,
+                                types: ["PPG", "Fractionné", "Endurance", "Course"]
+                            )
+                        }
+                        .padding(.horizontal)
                     }
 
                     // MARK: - Content

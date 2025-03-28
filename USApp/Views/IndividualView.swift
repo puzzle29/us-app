@@ -18,6 +18,7 @@ struct IndividualView: View {
     @State private var isUpdating: Bool = false
     var isShowingFutureSessions: Bool
     @Binding var searchQuery: String
+    @State private var selectedActivityType: String?
 
     private let cacheManager = CacheManager()
 
@@ -109,16 +110,18 @@ struct IndividualView: View {
             // Vérifier les critères de filtrage
             let matchesSearch = searchQuery.isEmpty || row.contains { $0.localizedCaseInsensitiveContains(searchQuery) }
             let matchesDate = isShowingFutureSessions ? date >= today : date < today
+            let matchesType = selectedActivityType == nil || row[4] == selectedActivityType
             
             print("""
                 ✓ Résultat du filtrage pour la ligne :
                 - Date valide : \(date)
                 - Correspond à la recherche : \(matchesSearch)
                 - Correspond au filtre de date : \(matchesDate)
-                - Sera affichée : \(matchesSearch && matchesDate)
+                - Correspond au filtre de type : \(matchesType)
+                - Sera affichée : \(matchesSearch && matchesDate && matchesType)
                 """)
             
-            return matchesSearch && matchesDate
+            return matchesSearch && matchesDate && matchesType
         }
         
         print("✅ Résultat final : \(filtered.count) lignes après filtrage")
