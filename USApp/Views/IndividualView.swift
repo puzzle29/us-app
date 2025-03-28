@@ -18,7 +18,7 @@ struct IndividualView: View {
     @State private var isUpdating: Bool = false
     var isShowingFutureSessions: Bool
     @Binding var searchQuery: String
-    @State private var selectedActivityType: String?
+    @Binding var selectedActivityType: String?
 
     private let cacheManager = CacheManager()
 
@@ -186,6 +186,7 @@ struct IndividualView: View {
         selectedProfile: .constant("Johann"),
         showProfileSelection: .constant(false),
         isShowingFutureSessions: true,
-        searchQuery: .constant("")
+        searchQuery: .constant(""),
+        selectedActivityType: .constant(nil)
     )
 }

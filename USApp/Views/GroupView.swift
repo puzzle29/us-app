@@ -82,7 +82,7 @@ struct GroupView: View {
     @State private var selectedRow: [String]?
     @State private var showDetailView: Bool = false
     var isShowingFutureSessions: Bool
-    @State private var selectedActivityType: String?
+    @Binding var selectedActivityType: String?
 
     private let cacheManager = CacheManager()
 
