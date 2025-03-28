@@ -34,19 +34,6 @@ struct SessionTile: View {
         }
     }
 
-    private func openInMaps(address: String) {
-        let encodedAddress = address.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        if let url = URL(string: "maps://?q=\(encodedAddress)") {
-            if UIApplication.shared.canOpenURL(url) {
-                UIApplication.shared.open(url)
-            } else {
-                // Fallback pour le web si Maps n'est pas disponible
-                let webUrl = URL(string: "https://maps.apple.com/?q=\(encodedAddress)")!
-                UIApplication.shared.open(webUrl)
-            }
-        }
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             
@@ -69,16 +56,12 @@ struct SessionTile: View {
                     .multilineTextAlignment(.leading)
             }
 
-            Button(action: {
-                openInMaps(address: location)
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "mappin.and.ellipse")
-                        .foregroundColor(.green)
-                    Text(location)
-                        .font(.subheadline)
-                        .foregroundColor(Color("TextTuileView"))
-                }
+            HStack(spacing: 8) {
+                Image(systemName: "mappin.and.ellipse")
+                    .foregroundColor(.green)
+                Text(location)
+                    .font(.subheadline)
+                    .foregroundColor(Color("TextTuileView"))
             }
 
             HStack(spacing: 8) {
