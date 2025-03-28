@@ -135,6 +135,7 @@ struct MainView: View {
             Text(
                 selectedTab == .groupe ? "Séances de l'US Athlé" :
                 selectedTab == .individuel ? "Séances perso" :
+                selectedTab == .notes ? "Mes Notes" :
                 "Fiche FFA"
             )
             .font(.title2)
@@ -164,6 +165,8 @@ struct MainView: View {
                     selectedActivityType: $selectedActivityType
                 )
                 .background(Color.clear)
+            } else if selectedTab == .notes {
+                NotesView()
             } else if selectedTab == .ffa {
                 LocalFileManagerView()
                     .background(Color.clear)

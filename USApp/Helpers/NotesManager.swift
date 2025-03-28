@@ -19,15 +19,24 @@ class NotesManager: ObservableObject {
     }
     
     private func loadNotes() {
-        if let data = userDefaults.data(forKey: notesKey),
-           let decodedNotes = try? JSONDecoder().decode([Note].self, from: data) {
-            notes = decodedNotes
+        if let data = userDefaults.data(forKey: notesKey) {
+            do {
+                notes = try JSONDecoder().decode([Note].self, from: data)
+                print("✅ Notes chargées : \(notes.count) notes")
+            } catch {
+                print("❌ Erreur lors du chargement des notes : \(error)")
+                notes = []
+            }
         }
     }
     
     private func saveNotes() {
-        if let encoded = try? JSONEncoder().encode(notes) {
+        do {
+            let encoded = try JSONEncoder().encode(notes)
             userDefaults.set(encoded, forKey: notesKey)
+            print("✅ Notes sauvegardées : \(notes.count) notes")
+        } catch {
+            print("❌ Erreur lors de la sauvegarde des notes : \(error)")
         }
     }
     
