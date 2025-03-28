@@ -1,6 +1,27 @@
 import SwiftUI
 import OpenAI
 
+// Ajout des structures pour le décodage manuel
+struct ChatResponse: Codable {
+    let id: String
+    let choices: [Choice]
+    
+    struct Choice: Codable {
+        let message: Message
+        let finishReason: String?
+        
+        enum CodingKeys: String, CodingKey {
+            case message
+            case finishReason = "finish_reason"
+        }
+    }
+    
+    struct Message: Codable {
+        let role: String
+        let content: String
+    }
+}
+
 class AIAssistantViewModel: ObservableObject {
     @Published var messages: [Message] = []
     @Published var isTyping = false
@@ -29,26 +50,44 @@ class AIAssistantViewModel: ObservableObject {
         let prompt = createPrompt(from: activity)
         
         do {
-            let query = ChatQuery(
-                messages: [
-                    ChatQuery.ChatCompletionMessageParam(role: .system, content: "Tu es un coach sportif expert qui donne des conseils personnalisés pour la préparation et la réussite des séances d'entraînement.")!,
-                    ChatQuery.ChatCompletionMessageParam(role: .user, content: prompt)!
-                ],
-                model: .gpt3_5Turbo
-            )
+            // Création de la requête brute
+            let requestBody: [String: Any] = [
+                "model": "gpt-3.5-turbo",
+                "messages": [
+                    ["role": "system", "content": "Tu es un coach sportif expert qui donne des conseils personnalisés pour la préparation et la réussite des séances d'entraînement."],
+                    ["role": "user", "content": prompt]
+                ]
+            ]
             
-            let result = try await openAI.chats(query: query)
+            let jsonData = try JSONSerialization.data(withJSONObject: requestBody)
+            
+            var request = URLRequest(url: URL(string: "https://api.openai.com/v1/chat/completions")!)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue("Bearer \(openAI.apiToken)", forHTTPHeaderField: "Authorization")
+            request.httpBody = jsonData
+            
+            let (data, _) = try await URLSession.shared.data(for: request)
+            
+            // Décodage manuel de la réponse
+            let decoder = JSONDecoder()
+            let response = try decoder.decode(ChatResponse.self, from: data)
             
             await MainActor.run {
-                if let message = result.choices.first?.message.content {
+                if let message = response.choices.first?.message.content {
                     self.messages.append(Message(content: message, isAI: true))
                 } else {
                     self.messages.append(Message(content: "Réponse vide de l'IA.", isAI: true))
                 }
                 self.isTyping = false
             }
+            
         } catch {
-            print("❌ Erreur OpenAI détaillée : \(error)")
+            print("❌ Erreur détaillée : \(error)")
+            if let data = try? JSONSerialization.jsonObject(with: error as! Data, options: []) {
+                print("📝 Réponse brute : \(data)")
+            }
+            
             await MainActor.run {
                 self.messages.append(Message(content: "Désolé, je n'ai pas pu générer de conseils pour le moment. Veuillez réessayer.", isAI: true))
                 self.isTyping = false
