@@ -10,6 +10,7 @@ import SwiftUI
 enum Tab {
     case groupe
     case individuel
+    case notes
     case ffa
 }
 
@@ -64,6 +65,21 @@ struct Toolbar: View {
                         Text("FFA")
                             .font(.caption)
                             .foregroundColor(selectedTab == .ffa ? Color("IconToolBar") : .gray.opacity(0.6))
+                    }
+                }
+
+                Spacer()
+
+                Button(action: {
+                    selectedTab = .notes
+                }) {
+                    VStack(spacing: 4) {
+                        Image(systemName: "note.text")
+                            .font(.system(size: 24))
+                            .foregroundColor(selectedTab == .notes ? Color("IconToolBar") : .gray.opacity(0.6))
+                        Text("Notes")
+                            .font(.caption)
+                            .foregroundColor(selectedTab == .notes ? Color("IconToolBar") : .gray.opacity(0.6))
                     }
                 }
 

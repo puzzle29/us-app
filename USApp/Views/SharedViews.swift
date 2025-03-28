@@ -132,6 +132,7 @@ enum RequestType: String, CaseIterable {
 
 // Ajouter un composant pour le bouton de demande
 struct RequestButton: View {
+    let sessionData: [String] // Ajouter les données de la séance
     @State private var showingRequestSheet = false
     @State private var selectedRequestType: RequestType = .question
     @State private var messageText = ""
@@ -156,7 +157,8 @@ struct RequestButton: View {
             RequestFormView(
                 showingSheet: $showingRequestSheet,
                 selectedType: $selectedRequestType,
-                messageText: $messageText
+                messageText: $messageText,
+                sessionData: sessionData
             )
         }
     }
@@ -167,6 +169,7 @@ struct RequestFormView: View {
     @Binding var showingSheet: Bool
     @Binding var selectedType: RequestType
     @Binding var messageText: String
+    let sessionData: [String]
     @Environment(\.dismiss) private var dismiss
     @State private var showingConfirmation = false
     
@@ -188,12 +191,16 @@ struct RequestFormView: View {
                 
                 Section {
                     Button(action: {
-                        sendRequest()
+                        NotesManager.shared.saveNote(
+                            type: selectedType,
+                            content: messageText,
+                            sessionData: sessionData
+                        )
                         showingConfirmation = true
                     }) {
                         HStack {
                             Spacer()
-                            Text("Envoyer")
+                            Text("Enregistrer")
                             Spacer()
                         }
                     }
@@ -216,17 +223,6 @@ struct RequestFormView: View {
             } message: {
                 Text("Votre note a été enregistrée avec succès.")
             }
-        }
-    }
-    
-    private func sendRequest() {
-        let subject = "[\(selectedType.rawValue)] Demande US Athlé"
-        let body = messageText
-        
-        if let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-           let encodedBody = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-           let url = URL(string: "mailto:email@example.com?subject=\(encodedSubject)&body=\(encodedBody)") {
-            UIApplication.shared.open(url)
         }
     }
 }
