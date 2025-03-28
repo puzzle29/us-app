@@ -11,6 +11,18 @@ struct DetailIndividualView: View {
     let rowData: [String]
     @Binding var selectedProfile: String?
 
+    private func openInMaps(address: String) {
+        let addressEncoded = address.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        if let url = URL(string: "maps://?q=\(addressEncoded)") {
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url)
+            } else {
+                let webUrl = URL(string: "https://maps.apple.com/?q=\(addressEncoded)")!
+                UIApplication.shared.open(webUrl)
+            }
+        }
+    }
+
     var body: some View {
         ZStack {
             // MARK: - Background
@@ -80,8 +92,11 @@ struct DetailIndividualView: View {
                         icon: DetailViewIcons.location,
                         title: "Lieu",
                         content: rowData[7],
-                        color: DetailViewColors.locationColor
-                    )
+                        color: DetailViewColors.locationColor,
+                        isInteractive: true
+                    ) {
+                        openInMaps(address: rowData[7])
+                    }
                 }
                 .padding()
             }

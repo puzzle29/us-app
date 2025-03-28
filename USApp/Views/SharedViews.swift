@@ -34,6 +34,8 @@ struct DetailRow: View {
     let title: String
     let content: String
     let color: Color
+    var isInteractive: Bool = false
+    var action: (() -> Void)? = nil
 
     // MARK: - Body
     var body: some View {
@@ -46,10 +48,26 @@ struct DetailRow: View {
             }
             .foregroundColor(color)
             
-            Text(content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "N/A" : content)
-                .font(.body)
-                .foregroundColor(content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .primary)
-                .padding(.leading, 24)
+            if isInteractive {
+                Button(action: {
+                    action?()
+                }) {
+                    HStack {
+                        Text(content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "N/A" : content)
+                            .font(.body)
+                            .foregroundColor(content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .blue)
+                        
+                        Image(systemName: "arrow.up.forward.app.fill")
+                            .foregroundColor(.blue)
+                    }
+                    .padding(.leading, 24)
+                }
+            } else {
+                Text(content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "N/A" : content)
+                    .font(.body)
+                    .foregroundColor(content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .primary)
+                    .padding(.leading, 24)
+            }
         }
     }
 }
