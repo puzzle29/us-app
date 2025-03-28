@@ -121,3 +121,105 @@ struct DetailViewIcons {
     static let pace = "speedometer"
     static let location = "location.fill"
 }
+
+// Ajouter un enum pour les types de demandes
+enum RequestType: String, CaseIterable {
+    case question = "Question"
+    case reclamation = "Réclamation"
+    case permission = "Demande de permission"
+    case autre = "Autre"
+}
+
+// Ajouter un composant pour le bouton de demande
+struct RequestButton: View {
+    @State private var showingRequestSheet = false
+    @State private var selectedRequestType: RequestType = .question
+    @State private var messageText = ""
+    
+    var body: some View {
+        VStack {
+            Button(action: {
+                showingRequestSheet = true
+            }) {
+                HStack {
+                    Image(systemName: "envelope.badge.fill")
+                        .foregroundColor(.white)
+                    Text("Faire une demande")
+                        .foregroundColor(.white)
+                }
+                .padding()
+                .background(Color.blue)
+                .cornerRadius(10)
+            }
+        }
+        .sheet(isPresented: $showingRequestSheet) {
+            RequestFormView(
+                showingSheet: $showingRequestSheet,
+                selectedType: $selectedRequestType,
+                messageText: $messageText
+            )
+        }
+    }
+}
+
+// Ajouter une vue pour le formulaire
+struct RequestFormView: View {
+    @Binding var showingSheet: Bool
+    @Binding var selectedType: RequestType
+    @Binding var messageText: String
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Type de demande")) {
+                    Picker("Type", selection: $selectedType) {
+                        ForEach(RequestType.allCases, id: \.self) { type in
+                            Text(type.rawValue).tag(type)
+                        }
+                    }
+                }
+                
+                Section(header: Text("Message")) {
+                    TextEditor(text: $messageText)
+                        .frame(height: 150)
+                }
+                
+                Section {
+                    Button(action: sendRequest) {
+                        HStack {
+                            Spacer()
+                            Text("Envoyer")
+                            Spacer()
+                        }
+                    }
+                    .foregroundColor(.blue)
+                }
+            }
+            .navigationTitle("Nouvelle demande")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Annuler") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+    
+    private func sendRequest() {
+        // Ici, vous pouvez implémenter la logique d'envoi
+        // Par exemple, ouvrir l'application mail avec les informations pré-remplies
+        let subject = "[\(selectedType.rawValue)] Demande US Athlé"
+        let body = messageText
+        
+        if let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+           let encodedBody = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+           let url = URL(string: "mailto:email@example.com?subject=\(encodedSubject)&body=\(encodedBody)") {
+            UIApplication.shared.open(url)
+        }
+        
+        dismiss()
+    }
+}
