@@ -99,7 +99,7 @@ struct DetailIndividualView: View {
                     }
 
                     // Ajouter le bouton de demande
-                    RequestButton()
+                    RequestButton(sessionData: rowData)
                         .padding(.top, 20)
                         .frame(maxWidth: .infinity, alignment: .center)
 
