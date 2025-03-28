@@ -17,7 +17,10 @@ class AIAssistantViewModel: ObservableObject {
     }
     
     func generateAdvice(for activity: [String]) async {
-        isTyping = true
+        await MainActor.run {
+            isTyping = true
+        }
+        
         let prompt = createPrompt(from: activity)
         
         do {
@@ -31,16 +34,13 @@ class AIAssistantViewModel: ObservableObject {
             
             let result = try await openAI.chats(query: query)
             
-            if let message = result.choices.first?.message.content {
-                await MainActor.run {
+            await MainActor.run {
+                if let message = result.choices.first?.message.content {
                     self.messages.append(Message(content: message, isAI: true))
-                    self.isTyping = false
-                }
-            } else {
-                await MainActor.run {
+                } else {
                     self.messages.append(Message(content: "Réponse vide de l'IA.", isAI: true))
-                    self.isTyping = false
                 }
+                self.isTyping = false
             }
         } catch {
             await MainActor.run {
@@ -83,7 +83,7 @@ struct AIAssistantView: View {
             Button(action: {
                 showingChat = true
             }) {
-                Image("ai-avatar") // Ajouter une image d'avatar IA dans vos assets
+                Image("ai-avatar")
                     .resizable()
                     .frame(width: 60, height: 60)
                     .clipShape(Circle())
