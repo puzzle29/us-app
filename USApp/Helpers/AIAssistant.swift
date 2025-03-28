@@ -88,7 +88,7 @@ class AIAssistantViewModel: ObservableObject {
     
     private func createPrompt(from activity: [String]) -> String {
         return """
-        En tant que coach sportif, analyse cette séance d'entraînement et donne des conseils personnalisés :
+        En tant que coach sportif, donne des conseils courts et précis (max 150 mots) pour cette séance :
         
         Date: \(activity[0])
         Échauffement: \(activity[1])
@@ -99,12 +99,10 @@ class AIAssistantViewModel: ObservableObject {
         Allure: \(activity[6])
         Lieu: \(activity[7])
         
-        Donne des conseils sur :
-        1. La préparation optimale
-        2. La gestion de l'effort
-        3. La récupération
-        4. Les points d'attention spécifiques au lieu
-        5. La nutrition avant/pendant/après
+        Donne 3 conseils essentiels et concis sur :
+        1. Préparation
+        2. Exécution
+        3. Récupération
         """
     }
 }
@@ -208,10 +206,17 @@ struct MessageBubble: View {
                 AIAssistantImage(size: 30)
             }
             
-            Text(message.content)
-                .padding()
-                .background(message.isAI ? Color.blue.opacity(0.1) : Color.gray.opacity(0.1))
-                .cornerRadius(15)
+            if message.isAI {
+                TypingText(text: message.content)
+                    .padding()
+                    .background(Color.blue.opacity(0.1))
+                    .cornerRadius(15)
+            } else {
+                Text(message.content)
+                    .padding()
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(15)
+            }
             
             if !message.isAI {
                 Spacer()
@@ -233,6 +238,32 @@ struct TypingIndicator: View {
             let timer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
             _ = timer.sink { _ in
                 dotCount = (dotCount + 1) % 3
+            }
+        }
+    }
+}
+
+// Ajouter une structure pour le texte avec effet typing
+struct TypingText: View {
+    let text: String
+    @State private var displayedText = ""
+    @State private var currentIndex = 0
+    
+    var body: some View {
+        Text(displayedText)
+            .onAppear {
+                startTyping()
+            }
+    }
+    
+    private func startTyping() {
+        Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { timer in
+            if currentIndex < text.count {
+                let index = text.index(text.startIndex, offsetBy: currentIndex)
+                displayedText += String(text[index])
+                currentIndex += 1
+            } else {
+                timer.invalidate()
             }
         }
     }
