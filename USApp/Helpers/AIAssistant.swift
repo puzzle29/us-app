@@ -25,7 +25,7 @@ struct ChatResponse: Codable {
 class AIAssistantViewModel: ObservableObject {
     @Published var messages: [Message] = []
     @Published var isTyping = false
-    private var openAI: OpenAI
+    private let apiKey: String
     
     struct Message: Identifiable {
         let id = UUID()
@@ -34,12 +34,8 @@ class AIAssistantViewModel: ObservableObject {
     }
     
     init() {
-        // Assurez-vous que la clé API est définie
-        guard let apiKey = ProcessInfo.processInfo.environment["OPENAI_API_KEY"] ?? Bundle.main.infoDictionary?["OPENAI_API_KEY"] as? String else {
-            self.openAI = OpenAI(apiToken: "VOTRE_CLE_API")
-            return
-        }
-        self.openAI = OpenAI(apiToken: apiKey)
+        // Remplacez ceci par votre clé API
+        self.apiKey = "VOTRE_CLE_API_OPENAI"
     }
     
     func generateAdvice(for activity: [String]) async {
@@ -50,7 +46,6 @@ class AIAssistantViewModel: ObservableObject {
         let prompt = createPrompt(from: activity)
         
         do {
-            // Création de la requête brute
             let requestBody: [String: Any] = [
                 "model": "gpt-3.5-turbo",
                 "messages": [
@@ -64,12 +59,11 @@ class AIAssistantViewModel: ObservableObject {
             var request = URLRequest(url: URL(string: "https://api.openai.com/v1/chat/completions")!)
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.setValue("Bearer \(openAI.apiToken)", forHTTPHeaderField: "Authorization")
+            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization") // Utilisation directe de apiKey
             request.httpBody = jsonData
             
             let (data, _) = try await URLSession.shared.data(for: request)
             
-            // Décodage manuel de la réponse
             let decoder = JSONDecoder()
             let response = try decoder.decode(ChatResponse.self, from: data)
             
@@ -84,9 +78,6 @@ class AIAssistantViewModel: ObservableObject {
             
         } catch {
             print("❌ Erreur détaillée : \(error)")
-            if let data = try? JSONSerialization.jsonObject(with: error as! Data, options: []) {
-                print("📝 Réponse brute : \(data)")
-            }
             
             await MainActor.run {
                 self.messages.append(Message(content: "Désolé, je n'ai pas pu générer de conseils pour le moment. Veuillez réessayer.", isAI: true))
