@@ -9,7 +9,7 @@ struct NotesView: View {
                 ForEach(notesManager.notes) { note in
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text(note.type.rawValue)
+                            Text(note.type)
                                 .font(.caption)
                                 .padding(4)
                                 .background(Color.blue.opacity(0.1))
@@ -25,15 +25,23 @@ struct NotesView: View {
                         Text(note.content)
                             .lineLimit(2)
                         
-                        Text("Séance du \(note.sessionData[0])")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                        if !note.sessionData.isEmpty {
+                            Text("Séance du \(note.sessionData[0])")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
-                .onDelete(perform: notesManager.deleteNote)
+                .onDelete { indexSet in
+                    notesManager.deleteNote(at: indexSet)
+                }
             }
             .navigationTitle("Notes")
             .navigationBarTitleDisplayMode(.inline)
         }
     }
+}
+
+#Preview {
+    NotesView()
 } 
